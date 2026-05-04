@@ -11,11 +11,13 @@ Scope {
 
     function dismiss() {
         GlobalStates.regionSelectorOpen = false
+        root.forceSave = false
     }
 
     property var action: RegionSelection.SnipAction.Copy
     property var selectionMode: RegionSelection.SelectionMode.RectCorners
-    
+    property bool forceSave: false
+
     Variants {
         model: Quickshell.screens
         delegate: Loader {
@@ -28,11 +30,19 @@ Scope {
                 onDismiss: root.dismiss()
                 action: root.action
                 selectionMode: root.selectionMode
+                forceSave: root.forceSave
             }
         }
     }
 
     function screenshot() {
+        root.action = RegionSelection.SnipAction.Copy
+        root.selectionMode = RegionSelection.SelectionMode.RectCorners
+        GlobalStates.regionSelectorOpen = true
+    }
+
+    function screenshotSave() {
+        root.forceSave = true
         root.action = RegionSelection.SnipAction.Copy
         root.selectionMode = RegionSelection.SelectionMode.RectCorners
         GlobalStates.regionSelectorOpen = true
@@ -76,6 +86,9 @@ Scope {
         function screenshot() {
             root.screenshot()
         }
+        function screenshotSave() {
+            root.screenshotSave()
+        }
         function search() {
             root.search()
         }
@@ -92,8 +105,13 @@ Scope {
 
     GlobalShortcut {
         name: "regionScreenshot"
-        description: "Takes a screenshot of the selected region"
+        description: "Takes a screenshot of the selected region (clipboard only)"
         onPressed: root.screenshot()
+    }
+    GlobalShortcut {
+        name: "regionScreenshotSave"
+        description: "Takes a screenshot of the selected region and saves to ~/Pictures/Screenshots"
+        onPressed: root.screenshotSave()
     }
     GlobalShortcut {
         name: "regionSearch"
