@@ -65,10 +65,10 @@ MaterialShape { // App icon
             anchors.fill: parent
             Image {
                 id: notifImage
-                anchors.fill: parent
                 readonly property int size: parent.width
 
                 source: root.image
+                visible: status === Image.Ready
                 fillMode: Image.PreserveAspectCrop
                 cache: false
                 antialiasing: true
