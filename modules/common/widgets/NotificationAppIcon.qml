@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Services.Notifications
+import org.kde.kirigami as Kirigami
 
 MaterialShape { // App icon
     id: root
@@ -48,13 +49,14 @@ MaterialShape { // App icon
     }
     Loader {
         id: appIconLoader
-        active: root.image == "" && root.appIcon != ""
+        active: root.appIcon != ""
         anchors.centerIn: parent
-        sourceComponent: IconImage {
-            id: appIconImage
-            implicitSize: root.appIconSize
-            asynchronous: true
-            source: Quickshell.iconPath(root.appIcon, "image-missing")
+        sourceComponent: Kirigami.Icon {
+            implicitWidth: root.appIconSize
+            implicitHeight: root.appIconSize
+            source: root.appIcon
+            fallback: "image-missing"
+            roundToIconSize: false
         }
     }
     Loader {
