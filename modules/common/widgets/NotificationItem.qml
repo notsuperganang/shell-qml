@@ -104,6 +104,7 @@ Item { // Notification item area
         }
 
         image: notificationObject.image
+        appIcon: notificationObject.appIcon
         anchors.right: background.left
         anchors.top: background.top
         anchors.rightMargin: 10
