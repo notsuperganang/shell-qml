@@ -15,14 +15,6 @@ import Quickshell.Hyprland
 Scope { // Scope
     id: root
     property bool pinned: Config.options?.dock.pinnedOnStartup ?? false
-    property bool forceReveal: false
-
-    IpcHandler {
-        target: "dock"
-        function toggle(): void {
-            root.forceReveal = !root.forceReveal
-        }
-    }
 
     Variants {
         // For each monitor
@@ -35,7 +27,7 @@ Scope { // Scope
             screen: modelData
             visible: !GlobalStates.screenLocked
 
-            property bool reveal: root.pinned || root.forceReveal || (Config.options?.dock.hoverToReveal && dockMouseArea.containsMouse) || dockApps.requestDockShow || (!ToplevelManager.activeToplevel?.activated)
+            property bool reveal: root.pinned || (Config.options?.dock.hoverToReveal && dockMouseArea.containsMouse) || dockApps.requestDockShow || (!ToplevelManager.activeToplevel?.activated)
 
             anchors {
                 bottom: true

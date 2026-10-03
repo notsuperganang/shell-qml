@@ -5,7 +5,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Services.Notifications
-import org.kde.kirigami as Kirigami
 
 MaterialShape { // App icon
     id: root
@@ -31,7 +30,7 @@ MaterialShape { // App icon
     color: isUrgent ? Appearance.colors.colPrimaryContainer : Appearance.colors.colSecondaryContainer
     Loader {
         id: materialSymbolLoader
-        active: root.appIcon == ""
+        active: root.appIcon == "" && root.image == ""
         anchors.fill: parent
         sourceComponent: MaterialSymbol {
             text: {
@@ -49,14 +48,13 @@ MaterialShape { // App icon
     }
     Loader {
         id: appIconLoader
-        active: root.appIcon != ""
+        active: root.image == "" && root.appIcon != ""
         anchors.centerIn: parent
-        sourceComponent: Kirigami.Icon {
-            implicitWidth: root.appIconSize
-            implicitHeight: root.appIconSize
-            source: root.appIcon
-            fallback: "image-missing"
-            roundToIconSize: false
+        sourceComponent: IconImage {
+            id: appIconImage
+            implicitSize: root.appIconSize
+            asynchronous: true
+            source: Quickshell.iconPath(root.appIcon, "image-missing")
         }
     }
     Loader {
@@ -65,21 +63,16 @@ MaterialShape { // App icon
         anchors.fill: parent
         sourceComponent: Item {
             anchors.fill: parent
-            Image {
+            StyledImage {
                 id: notifImage
+                anchors.fill: parent
                 readonly property int size: parent.width
 
                 source: root.image
-                visible: status === Image.Ready
                 fillMode: Image.PreserveAspectCrop
                 cache: false
                 antialiasing: true
                 asynchronous: true
-
-                width: size
-                height: size
-                sourceSize.width: size
-                sourceSize.height: size
 
                 layer.enabled: true
                 layer.effect: OpacityMask {

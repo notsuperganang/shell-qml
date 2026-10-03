@@ -34,7 +34,6 @@ PanelWindow {
     enum Phase { Select, Post }
     property var action: RegionSelection.SnipAction.Copy
     property var selectionMode: RegionSelection.SelectionMode.RectCorners
-    property bool forceSave: false
     property var phase: RegionSelection.Phase.Select
     signal dismiss()
 
@@ -277,8 +276,8 @@ PanelWindow {
             root.action = root.mouseButton === Qt.RightButton ? RegionSelection.SnipAction.Edit : RegionSelection.SnipAction.Copy;
         }
         
-        const screenshotDir = Config.options.screenSnip.savePath !== "" ? Config.options.screenSnip.savePath :
-            (root.forceSave ? FileUtils.trimFileProtocol(Directories.pictures) + "/Screenshots" : "");
+        const screenshotDir = Config.options.screenSnip.savePath !== "" ? //
+            Config.options.screenSnip.savePath : "";
         var screenshotAction = root.getScreenshotAction();
         const command = ScreenshotAction.getCommand(
             root.regionX * root.monitorScale, //

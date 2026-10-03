@@ -51,9 +51,9 @@ Singleton {
                 return [
                     "bash", "-c",
                     `mkdir -p '${StringUtils.shellSingleQuoteEscape(saveDir)}' && \
-                    savePath='${StringUtils.shellSingleQuoteEscape(saveDir)}'/screenshot-"$(date '+%Y-%m-%d_%H.%M.%S')".png && \
-                    ${cropBase} "$savePath" && \
-                    wl-copy < "$savePath" && \
+                    saveFileName="screenshot-$(date '+%Y-%m-%d_%H.%M.%S').png" && \
+                    savePath="${saveDir}/$saveFileName" && \
+                    ${cropToStdout} | tee >(wl-copy) > "$savePath" && \
                     ${cleanup}`
                 ]
 
