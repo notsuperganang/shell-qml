@@ -34,6 +34,11 @@ ApplicationWindow {
             component: "modules/settings/GeneralConfig.qml"
         },
         {
+            name: Translation.tr("Display"),
+            icon: "monitor",
+            component: "modules/settings/DisplayConfig.qml"
+        },
+        {
             name: Translation.tr("Bar"),
             icon: "toast",
             iconRotation: 180,
