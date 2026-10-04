@@ -24,8 +24,12 @@ Item {
         implicitHeight: 40
         placeholderText: Translation.tr("Search keybinds (e.g. screenshot, workspace, shift)")
         onTextChanged: root.query = text
-        // Grab typing as soon as the cheatsheet opens (the close button takes focus first)
-        Component.onCompleted: Qt.callLater(() => searchField.forceActiveFocus())
+    }
+
+    // Called each time the cheatsheet opens: start with an empty, focused search field.
+    function resetSearch() {
+        searchField.text = "";
+        Qt.callLater(() => searchField.forceActiveFocus());
     }
 
     StyledFlickable {

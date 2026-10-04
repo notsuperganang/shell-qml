@@ -24,13 +24,27 @@ Scope { // Scope
         },
     ]
 
+    // Keep the window alive and only map/unmap it (like the overview): recreating a layer that
+    // asks for keyboard focus takes ~2 s, and the search field needs keyboard focus.
+    property bool open: false
+
     Loader {
         id: cheatsheetLoader
-        active: false
+        active: true
 
         sourceComponent: PanelWindow { // Window
             id: cheatsheetRoot
-            visible: cheatsheetLoader.active
+            visible: root.open
+            // Register with the focus grab only once mapped: adding an unmapped surface makes
+            // the grab dismiss (and close) the cheatsheet immediately.
+            onVisibleChanged: {
+                if (visible) {
+                    GlobalFocusGrab.addDismissable(cheatsheetRoot);
+                    cheatsheetRoot.resetSearch();
+                } else {
+                    GlobalFocusGrab.removeDismissable(cheatsheetRoot);
+                }
+            }
 
             anchors {
                 top: true
@@ -40,24 +54,22 @@ Scope { // Scope
             }
 
             function hide() {
-                cheatsheetLoader.active = false;
+                root.open = false;
+            }
+            function resetSearch() {
+                keybindsPage.resetSearch();
             }
             exclusiveZone: 0
             implicitWidth: cheatsheetBackground.width + Appearance.sizes.elevationMargin * 2
             implicitHeight: cheatsheetBackground.height + Appearance.sizes.elevationMargin * 2
             WlrLayershell.namespace: "quickshell:cheatsheet"
-            // Setting this value makes it take its sweet time to open
-            // Needed for the search field (upstream left this off because opening felt slower)
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+            WlrLayershell.keyboardFocus: root.open ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             color: "transparent"
 
             mask: Region {
                 item: cheatsheetBackground
             }
 
-            Component.onCompleted: {
-                GlobalFocusGrab.addDismissable(cheatsheetRoot);
-            }
             Component.onDestruction: {
                 GlobalFocusGrab.removeDismissable(cheatsheetRoot);
             }
@@ -171,7 +183,9 @@ Scope { // Scope
                             }
                         }
 
-                        CheatsheetKeybinds {}
+                        CheatsheetKeybinds {
+                            id: keybindsPage
+                        }
                         CheatsheetPeriodicTable {}
                     }
                 }
@@ -183,15 +197,15 @@ Scope { // Scope
         target: "cheatsheet"
 
         function toggle(): void {
-            cheatsheetLoader.active = !cheatsheetLoader.active;
+            root.open = !root.open;
         }
 
         function close(): void {
-            cheatsheetLoader.active = false;
+            root.open = false;
         }
 
         function open(): void {
-            cheatsheetLoader.active = true;
+            root.open = true;
         }
     }
 
@@ -200,7 +214,7 @@ Scope { // Scope
         description: "Toggles cheatsheet on press"
 
         onPressed: {
-            cheatsheetLoader.active = !cheatsheetLoader.active;
+            root.open = !root.open;
         }
     }
 
@@ -209,7 +223,7 @@ Scope { // Scope
         description: "Opens cheatsheet on press"
 
         onPressed: {
-            cheatsheetLoader.active = true;
+            root.open = true;
         }
     }
 
@@ -218,7 +232,7 @@ Scope { // Scope
         description: "Closes cheatsheet on press"
 
         onPressed: {
-            cheatsheetLoader.active = false;
+            root.open = false;
         }
     }
 }
