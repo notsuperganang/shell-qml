@@ -26,11 +26,8 @@ Item {
         onTextChanged: root.query = text
     }
 
-    // Called each time the cheatsheet opens: start with an empty, focused search field.
-    function resetSearch() {
-        searchField.text = "";
-        Qt.callLater(() => searchField.forceActiveFocus());
-    }
+    // Rebuilt on every open, so the field starts empty; just grab focus for typing.
+    Component.onCompleted: Qt.callLater(() => searchField.forceActiveFocus())
 
     StyledFlickable {
         id: flickable

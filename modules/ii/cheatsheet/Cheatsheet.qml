@@ -40,7 +40,6 @@ Scope { // Scope
             onVisibleChanged: {
                 if (visible) {
                     GlobalFocusGrab.addDismissable(cheatsheetRoot);
-                    cheatsheetRoot.resetSearch();
                 } else {
                     GlobalFocusGrab.removeDismissable(cheatsheetRoot);
                 }
@@ -55,9 +54,6 @@ Scope { // Scope
 
             function hide() {
                 root.open = false;
-            }
-            function resetSearch() {
-                keybindsPage.resetSearch();
             }
             exclusiveZone: 0
             implicitWidth: cheatsheetBackground.width + Appearance.sizes.elevationMargin * 2
@@ -92,14 +88,15 @@ Scope { // Scope
                 border.color: Appearance.colors.colLayer0Border
                 radius: Appearance.rounding.windowRounding
                 property real padding: 20
-                implicitWidth: cheatsheetColumnLayout.implicitWidth + padding * 2
-                implicitHeight: cheatsheetColumnLayout.implicitHeight + padding * 2
+                implicitWidth: contentLoader.implicitWidth + padding * 2
+                implicitHeight: contentLoader.implicitHeight + padding * 2
 
                 Keys.onPressed: event => { // Esc to close
                     if (event.key === Qt.Key_Escape) {
                         cheatsheetRoot.hide();
                     }
-                    if (event.modifiers === Qt.ControlModifier) {
+                    const tabBar = contentLoader.item?.tabs;
+                    if (tabBar && event.modifiers === Qt.ControlModifier) {
                         if (event.key === Qt.Key_PageDown) {
                             tabBar.incrementCurrentIndex();
                             event.accepted = true;
@@ -141,9 +138,15 @@ Scope { // Scope
                     }
                 }
 
-                ColumnLayout { // Real content
-                    id: cheatsheetColumnLayout
+                // Real content: built only while open. Keeping it alive costs ~40 MB, and it
+                // rebuilds fast; only the window itself must stay alive for instant focus.
+                Loader {
+                    id: contentLoader
                     anchors.centerIn: parent
+                    active: root.open
+
+                    sourceComponent: ColumnLayout {
+                    property alias tabs: tabBar
                     spacing: 10
 
                     Toolbar {
@@ -183,10 +186,9 @@ Scope { // Scope
                             }
                         }
 
-                        CheatsheetKeybinds {
-                            id: keybindsPage
-                        }
+                        CheatsheetKeybinds {}
                         CheatsheetPeriodicTable {}
+                    }
                     }
                 }
             }
