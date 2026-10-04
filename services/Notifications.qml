@@ -26,9 +26,14 @@ Singleton {
         })) ?? []
         property bool popup: false
         property bool isTransient: notification?.hints.transient ?? false
-        property string appIcon: notification?.appIcon ?? ""
-        property string appName: notification?.appName ?? ""
-        property string body: notification?.body ?? ""
+        readonly property var webApp: root.webAppFor(notification?.body ?? "")
+        // Chromium's file:///tmp/... logo is deleted once the notification closes; prefer the theme icon.
+        property string appIcon: webApp?.icon
+            ?? (notification?.appIcon.startsWith("file:///tmp/") ? DesktopEntries.applications.values.find(e => e.name === notification.appName)?.icon : null)
+            ?? notification?.appIcon ?? ""
+        property string appName: webApp?.name ?? notification?.appName ?? ""
+        // The app name already says which site it is, so drop Chromium's origin link
+        property string body: webApp ? notification.body.replace(root.originLinkRegex, "") : notification?.body ?? ""
         property string image: notification?.image ?? ""
         property string summary: notification?.summary ?? ""
         property double time
@@ -40,6 +45,20 @@ Singleton {
                 root.discardNotification(notificationId);
             }
         }
+    }
+
+    // Chromium/Brave send PWA notifications as the browser itself (Brave logo); the site is only
+    // in the origin link that starts the body. Show installed PWAs under their own name and icon.
+    readonly property var webAppNames: ({
+        "web.whatsapp.com": "WhatsApp Web",
+    })
+    readonly property var originLinkRegex: /^<a href="https?:\/\/([^/"]+)[^"]*">[^<]*<\/a>\n*/
+    function webAppFor(body) {
+        const host = body.match(originLinkRegex)?.[1];
+        const name = webAppNames[host];
+        if (!name) return null;
+        const entry = DesktopEntries.applications.values.find(e => e.name === name);
+        return entry ? { "name": name, "icon": entry.icon } : null;
     }
 
     function notifToJSON(notif) {
