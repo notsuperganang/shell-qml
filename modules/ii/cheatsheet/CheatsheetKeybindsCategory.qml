@@ -13,6 +13,7 @@ import Quickshell
 Column {
     id: root
     required property string categoryName
+    property string searchQuery: ""
     readonly property bool isCategorized: categoryName?.length > 0
     property int maxBindWidth: 0
     property real columnSpacing: 40
@@ -115,6 +116,17 @@ Column {
         return bind.description.indexOf(":") === -1;
     }
 
+    // Every word of the query must appear in the description, key or modifiers
+    // (raw and as displayed, so "enter", "return", "/" and "slash" all work).
+    function matchesQuery(bind) {
+        const words = root.searchQuery.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+        if (words.length === 0) return true;
+        const mods = root.modMaskToStringList(bind.modmask);
+        const haystack = [bind.description, bind.key, root.transformKey(bind.key), ...mods,
+            ...mods.map(m => root.keySubstitutions[m] || "")].join(" ").toLowerCase();
+        return words.every(w => haystack.includes(w));
+    }
+
     function containsNonFirstRepetitive(bind) {
         const key = bind.key;
         if (key.includes("mouse") || key.includes("page")) return false;
@@ -153,9 +165,9 @@ Column {
             id: repeater
             model: {
                 if (!root.isCategorized) {
-                    return HyprlandKeybinds.keybinds.filter(bind => root.hasDescription(bind) && root.isUncategorized(bind) && !root.containsNonFirstRepetitive(bind));
+                    return HyprlandKeybinds.keybinds.filter(bind => root.hasDescription(bind) && root.isUncategorized(bind) && !root.containsNonFirstRepetitive(bind) && root.matchesQuery(bind));
                 }
-                return HyprlandKeybinds.keybinds.filter(bind => root.hasDescription(bind) && root.isCategory(bind, root.categoryName) && !root.containsNonFirstRepetitive(bind));
+                return HyprlandKeybinds.keybinds.filter(bind => root.hasDescription(bind) && root.isCategory(bind, root.categoryName) && !root.containsNonFirstRepetitive(bind) && root.matchesQuery(bind));
             }
             delegate: BindLine {
                 required property var modelData

@@ -14,10 +14,30 @@ Item {
     implicitWidth: QsWindow?.window?.screen.width * 0.7 ?? 0
     implicitHeight: QsWindow?.window?.screen.height * 0.7 ?? 0
 
+    property string query: ""
+
+    ToolbarTextField {
+        id: searchField
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        implicitWidth: 360
+        implicitHeight: 40
+        placeholderText: Translation.tr("Search keybinds (e.g. screenshot, workspace, shift)")
+        onTextChanged: root.query = text
+        // Grab typing as soon as the cheatsheet opens (the close button takes focus first)
+        Component.onCompleted: Qt.callLater(() => searchField.forceActiveFocus())
+    }
+
     StyledFlickable {
         id: flickable
         clip: true
-        anchors.fill: parent
+        anchors {
+            top: searchField.bottom
+            topMargin: 12
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
         anchors.margins: Appearance.rounding.small
         contentHeight: height
         contentWidth: flow.implicitWidth
@@ -31,6 +51,7 @@ Item {
                 delegate: CheatsheetKeybindsCategory {
                     required property var modelData
                     categoryName: modelData
+                    searchQuery: root.query
                 }
             }
         }
