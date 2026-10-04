@@ -182,18 +182,24 @@ ContentPage {
             Layout.fillWidth: true
             spacing: 8
 
-            StyledComboBox {
-                id: profileCombo
-                visible: !page.renaming
-                Layout.fillWidth: true
-                buttonIcon: "desktop_windows"
-                textRole: "displayName"
-                model: Displays.profileNames().map(n => ({
-                    displayName: n === Displays.data?.active ? `${n}  •  ${Translation.tr("active")}` : n,
-                    value: n
-                }))
-                currentIndex: Math.max(0, model.findIndex(item => item.value === page.selectedName))
-                onActivated: index => page.loadProfile(model[index].value)
+            // Controls below are rebuilt whenever what they show changes: Qt's ComboBox and
+            // ConfigSwitch drop their bindings once clicked, and these are shared across
+            // profiles/displays.
+            Repeater {
+                model: page.renaming ? [] : [`${page.selectedName}|${Displays.data?.active}|${Displays.profileNames().join("|")}`]
+                delegate: StyledComboBox {
+                    objectName: "profileCombo"
+                    Layout.fillWidth: true
+                    enabled: !Displays.pending
+                    buttonIcon: "desktop_windows"
+                    textRole: "displayName"
+                    model: Displays.profileNames().map(n => ({
+                        displayName: n === Displays.data?.active ? `${n}  •  ${Translation.tr("active")}` : n,
+                        value: n
+                    }))
+                    currentIndex: Math.max(0, model.findIndex(item => item.value === page.selectedName))
+                    onActivated: index => page.loadProfile(model[index].value)
+                }
             }
 
             MaterialTextField {
@@ -427,84 +433,95 @@ ContentPage {
             }
         }
 
-        ConfigSwitch {
-            buttonIcon: "power_settings_new"
-            text: Translation.tr("Enabled")
-            checked: page.selectedMonitor?.enabled ?? false
-            onCheckedChanged: {
-                if (page.selectedMonitor && checked !== page.selectedMonitor.enabled)
-                    page.setField("enabled", checked);
-            }
-        }
-
-        ContentSubsection {
-            visible: page.selectedMonitor?.enabled ?? false
-            title: Translation.tr("Resolution & refresh rate")
-
-            StyledComboBox {
+        Repeater {
+            model: page.selectedMonitor ? [`${page.selectedIndex}|${JSON.stringify(page.selectedMonitor)}|${(page.selectedDetected?.modes ?? []).length}|${Displays.detected.length}`] : []
+            delegate: ColumnLayout {
                 Layout.fillWidth: true
-                buttonIcon: "aspect_ratio"
-                textRole: "displayName"
-                model: {
-                    const m = page.selectedMonitor;
-                    if (!m) return [];
-                    const modes = page.selectedDetected?.modes ?? [];
-                    const list = modes.some(x => Displays.sameMode(x, m.mode)) ? modes : [m.mode, ...modes];
-                    return list.map(x => ({ displayName: Displays.modeLabel(x), value: x }));
+                spacing: 8
+                enabled: !Displays.pending
+
+                ConfigSwitch {
+                    objectName: "enabledSwitch"
+                    buttonIcon: "power_settings_new"
+                    text: Translation.tr("Enabled")
+                    checked: page.selectedMonitor?.enabled ?? false
+                    onCheckedChanged: {
+                        if (page.selectedMonitor && checked !== page.selectedMonitor.enabled)
+                            page.setField("enabled", checked);
+                    }
                 }
-                currentIndex: Math.max(0, model.findIndex(item => Displays.sameMode(item.value, page.selectedMonitor?.mode)))
-                onActivated: index => {
-                    const mode = model[index].value;
-                    page.mutate(d => {
-                        const m = d.monitors[page.selectedIndex];
-                        m.mode = mode;
-                        if (!Displays.validScales(mode).some(s => Math.abs(s - m.scale) < 0.001)) m.scale = 1;
-                    });
+
+                ContentSubsection {
+                    visible: page.selectedMonitor?.enabled ?? false
+                    title: Translation.tr("Resolution & refresh rate")
+
+                    StyledComboBox {
+                        objectName: "modeCombo"
+                        Layout.fillWidth: true
+                        buttonIcon: "aspect_ratio"
+                        textRole: "displayName"
+                        model: {
+                            const m = page.selectedMonitor;
+                            if (!m) return [];
+                            const modes = page.selectedDetected?.modes ?? [];
+                            const list = modes.some(x => Displays.sameMode(x, m.mode)) ? modes : [m.mode, ...modes];
+                            return list.map(x => ({ displayName: Displays.modeLabel(x), value: x }));
+                        }
+                        currentIndex: Math.max(0, model.findIndex(item => Displays.sameMode(item.value, page.selectedMonitor?.mode)))
+                        onActivated: index => {
+                            const mode = model[index].value;
+                            page.mutate(d => {
+                                const m = d.monitors[page.selectedIndex];
+                                m.mode = mode;
+                                if (!Displays.validScales(mode).some(s => Math.abs(s - m.scale) < 0.001)) m.scale = 1;
+                            });
+                        }
+                    }
                 }
-            }
-        }
 
-        ContentSubsection {
-            visible: page.selectedMonitor?.enabled ?? false
-            title: Translation.tr("Scale")
-            tooltip: Translation.tr("Only scales that divide this resolution into whole pixels are offered.")
+                ContentSubsection {
+                    visible: page.selectedMonitor?.enabled ?? false
+                    title: Translation.tr("Scale")
+                    tooltip: Translation.tr("Only scales that divide this resolution into whole pixels are offered.")
 
-            ConfigSelectionArray {
-                currentValue: page.selectedMonitor ? Displays.validScales(page.selectedMonitor.mode).find(s => Math.abs(s - page.selectedMonitor.scale) < 0.001) ?? null : null
-                options: page.selectedMonitor ? Displays.validScales(page.selectedMonitor.mode).map(s => ({
-                    displayName: `${Math.round(s * 100)}%`,
-                    value: s
-                })) : []
-                onSelected: newValue => page.setField("scale", newValue)
-            }
-        }
+                    ConfigSelectionArray {
+                        currentValue: page.selectedMonitor ? Displays.validScales(page.selectedMonitor.mode).find(s => Math.abs(s - page.selectedMonitor.scale) < 0.001) ?? null : null
+                        options: page.selectedMonitor ? Displays.validScales(page.selectedMonitor.mode).map(s => ({
+                            displayName: `${Math.round(s * 100)}%`,
+                            value: s
+                        })) : []
+                        onSelected: newValue => page.setField("scale", newValue)
+                    }
+                }
 
-        ContentSubsection {
-            visible: page.selectedMonitor?.enabled ?? false
-            title: Translation.tr("Rotation")
+                ContentSubsection {
+                    visible: page.selectedMonitor?.enabled ?? false
+                    title: Translation.tr("Rotation")
 
-            ConfigSelectionArray {
-                currentValue: page.selectedMonitor?.transform ?? 0
-                options: [0, 1, 2, 3].map(t => ({ displayName: Translation.tr(Displays.transformNames[t]), value: t }))
-                onSelected: newValue => page.setField("transform", newValue)
-            }
-        }
+                    ConfigSelectionArray {
+                        currentValue: page.selectedMonitor?.transform ?? 0
+                        options: [0, 1, 2, 3].map(t => ({ displayName: Translation.tr(Displays.transformNames[t]), value: t }))
+                        onSelected: newValue => page.setField("transform", newValue)
+                    }
+                }
 
-        ContentSubsection {
-            visible: page.selectedMonitor?.enabled ?? false
-            title: Translation.tr("Mirror")
-            tooltip: Translation.tr("Show the same picture as another display (e.g. for presentations).")
+                ContentSubsection {
+                    visible: page.selectedMonitor?.enabled ?? false
+                    title: Translation.tr("Mirror")
+                    tooltip: Translation.tr("Show the same picture as another display (e.g. for presentations).")
 
-            StyledComboBox {
-                Layout.fillWidth: true
-                buttonIcon: "screen_share"
-                textRole: "displayName"
-                model: [{ displayName: Translation.tr("Don't mirror"), value: "" }].concat(
-                    Displays.detected
-                        .filter(d => !page.selectedMonitor || !Displays.outputMatches(page.selectedMonitor.output, d))
-                        .map(d => ({ displayName: Translation.tr("Mirror %1 (%2)").arg(d.label).arg(d.name), value: d.name })))
-                currentIndex: Math.max(0, model.findIndex(item => item.value === (page.selectedMonitor?.mirror ?? "")))
-                onActivated: index => page.setField("mirror", model[index].value)
+                    StyledComboBox {
+                        Layout.fillWidth: true
+                        buttonIcon: "screen_share"
+                        textRole: "displayName"
+                        model: [{ displayName: Translation.tr("Don't mirror"), value: "" }].concat(
+                            Displays.detected
+                                .filter(d => !page.selectedMonitor || !Displays.outputMatches(page.selectedMonitor.output, d))
+                                .map(d => ({ displayName: Translation.tr("Mirror %1 (%2)").arg(d.label).arg(d.name), value: d.name })))
+                        currentIndex: Math.max(0, model.findIndex(item => item.value === (page.selectedMonitor?.mirror ?? "")))
+                        onActivated: index => page.setField("mirror", model[index].value)
+                    }
+                }
             }
         }
     }
@@ -525,13 +542,14 @@ ContentPage {
         }
 
         Repeater {
-            model: 10
+            model: page.draft ? Array.from({ length: 10 }, (_, i) => ({ number: i + 1, rule: page.workspaceRule(i + 1) })) : []
             delegate: RowLayout {
                 id: wsRow
-                required property int index
-                readonly property int number: wsRow.index + 1
-                readonly property var rule: page.workspaceRule(wsRow.number)
+                required property var modelData
+                readonly property int number: wsRow.modelData.number
+                readonly property var rule: wsRow.modelData.rule
                 Layout.fillWidth: true
+                enabled: !Displays.pending
                 spacing: 8
 
                 StyledText {
