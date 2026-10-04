@@ -21,6 +21,15 @@ MaterialShape { // App icon
     property real smallAppIconSize: implicitSize * smallAppIconScale
 
     implicitSize: 38 * scale
+
+    // Chromium/Brave (incl. PWAs like WhatsApp Web) send a file:// URL or path as the app
+    // icon, not a theme icon name; iconPath() can't resolve those and shows image-missing.
+    function iconSource(icon) {
+        const name = String(icon);
+        if (name.startsWith("file://")) return name;
+        if (name.startsWith("/")) return `file://${name}`;
+        return Quickshell.iconPath(name, "image-missing");
+    }
     property list<var> urgentShapes: [
         MaterialShape.Shape.VerySunny,
         MaterialShape.Shape.SoftBurst,
@@ -54,7 +63,7 @@ MaterialShape { // App icon
             id: appIconImage
             implicitSize: root.appIconSize
             asynchronous: true
-            source: Quickshell.iconPath(root.appIcon, "image-missing")
+            source: root.iconSource(root.appIcon)
         }
     }
     Loader {
@@ -91,7 +100,7 @@ MaterialShape { // App icon
                 sourceComponent: IconImage {
                     implicitSize: root.smallAppIconSize
                     asynchronous: true
-                    source: Quickshell.iconPath(root.appIcon, "image-missing")
+                    source: root.iconSource(root.appIcon)
                 }
             }
         }
