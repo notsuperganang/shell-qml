@@ -1,5 +1,6 @@
 import qs.modules.common
 import qs.modules.common.functions
+import qs.services
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import Quickshell
@@ -94,7 +95,7 @@ MaterialShape { // App icon
             }
             Loader {
                 id: notifImageAppIconLoader
-                active: root.appIcon != ""
+                active: root.appIcon != "" && !Notifications.noBadgeIcons.includes(root.appIcon)
                 anchors.bottom: parent.bottom
                 anchors.right: parent.right
                 sourceComponent: IconImage {

@@ -52,6 +52,10 @@ Singleton {
     readonly property var webAppNames: ({
         "web.whatsapp.com": "WhatsApp Web",
     })
+    // Web apps whose notification image is the sender's photo: show it without the app badge.
+    readonly property list<string> noBadgeApps: ["WhatsApp Web"]
+    readonly property list<string> noBadgeIcons: DesktopEntries.applications.values
+        .filter(e => noBadgeApps.includes(e.name)).map(e => e.icon)
     readonly property var originLinkRegex: /^<a href="https?:\/\/([^/"]+)[^"]*">[^<]*<\/a>\n*/
     function webAppFor(body) {
         const host = body.match(originLinkRegex)?.[1];
