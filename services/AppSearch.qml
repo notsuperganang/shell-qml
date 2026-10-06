@@ -59,6 +59,9 @@ Singleton {
     }))
 
     function fuzzyQuery(search: string): var { // Idk why list<DesktopEntry> doesn't work
+        // Empty query (just the ">" prefix) lists every app; show them A-Z instead of in file order
+        if (search.trim() === "")
+            return list.slice().sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
         if (root.sloppySearch) {
             const results = list.map(obj => ({
                 entry: obj,

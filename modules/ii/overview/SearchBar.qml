@@ -35,6 +35,17 @@ RowLayout {
     MaterialShapeWrappedMaterialSymbol {
         id: searchIcon
         Layout.alignment: Qt.AlignVCenter
+        // Click to list all apps (same as typing the app prefix); click again to clear
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                const appPrefix = Config.options.search.prefix.app;
+                searchInput.text = root.searchPrefixType === SearchBar.SearchPrefixType.App ? "" : appPrefix;
+                searchInput.cursorPosition = searchInput.text.length;
+                searchInput.forceActiveFocus();
+            }
+        }
         iconSize: Appearance.font.pixelSize.huge
         shape: switch(root.searchPrefixType) {
             case SearchBar.SearchPrefixType.Action: return MaterialShape.Shape.Pill;
@@ -65,7 +76,7 @@ RowLayout {
         implicitHeight: 40
         focus: GlobalStates.overviewOpen
         font.pixelSize: Appearance.font.pixelSize.small
-        placeholderText: Translation.tr("Search, calculate or run")
+        placeholderText: Translation.tr("Search or > for all apps")
         implicitWidth: root.searchingText == "" ? Appearance.sizes.searchWidthCollapsed : Appearance.sizes.searchWidth
 
         Behavior on implicitWidth {
