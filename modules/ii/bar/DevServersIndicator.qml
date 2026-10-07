@@ -64,6 +64,7 @@ MouseArea {
                 model: root.servers
                 delegate: ServerRow {
                     required property var modelData
+                    Layout.fillWidth: true // rows as wide as the popup, so the button columns line up
                     port: modelData.port
                     title: modelData.hint ? `${modelData.name} · ${modelData.hint}` : modelData.name
                     subtitle: modelData.project
@@ -82,6 +83,7 @@ MouseArea {
                 model: DevServers.services
                 delegate: ServerRow {
                     required property var modelData
+                    Layout.fillWidth: true // rows as wide as the popup, so the button columns line up
                     port: modelData.port
                     title: modelData.name || Translation.tr("service")
                     subtitle: Translation.tr("system")
@@ -106,7 +108,6 @@ MouseArea {
             text: row.port
         }
         ColumnLayout {
-            Layout.fillWidth: true
             Layout.minimumWidth: 150
             spacing: 0
             StyledText {
@@ -118,6 +119,9 @@ MouseArea {
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colSubtext
             }
+        }
+        Item { // pushes the buttons to the right edge (text can't stretch, so the column above won't)
+            Layout.fillWidth: true
         }
         RippleButton {
             implicitWidth: 30
@@ -131,7 +135,9 @@ MouseArea {
             }
         }
         RippleButton {
-            visible: row.pid > 0
+            // hidden but still taking space when we can't kill it, keeping the open buttons aligned
+            opacity: row.pid > 0 ? 1 : 0
+            enabled: row.pid > 0
             implicitWidth: row.armed ? confirmText.implicitWidth + 16 : 30
             implicitHeight: 30
             buttonRadius: Appearance.rounding.full
