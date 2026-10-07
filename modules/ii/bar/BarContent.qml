@@ -329,6 +329,17 @@ Item { // Bar content region
                 Layout.fillHeight: true
             }
 
+            // Dev servers (only while one is running); the right section flexes, the center groups don't
+            Loader {
+                Layout.leftMargin: 4
+                active: DevServers.servers.length > 0
+                visible: active
+
+                sourceComponent: BarGroup {
+                    DevServersIndicator {}
+                }
+            }
+
             // Weather
             Loader {
                 Layout.leftMargin: 4
