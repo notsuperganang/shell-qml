@@ -308,6 +308,13 @@ Singleton {
         })]
     }
 
+    // Gelbooru answers 401 without API credentials (sidebar.booru.gelbooru in config.json)
+    function gelbooruAuth() {
+        const creds = Config.options?.sidebar?.booru?.gelbooru;
+        if (!creds?.apiKey || !creds?.userId) return "";
+        return `&api_key=${encodeURIComponent(creds.apiKey)}&user_id=${encodeURIComponent(creds.userId)}`;
+    }
+
     function constructRequestUrl(tags, nsfw=true, limit=20, page=1) {
         var provider = providers[currentProvider]
         var baseUrl = provider.api
@@ -356,6 +363,7 @@ Singleton {
         } else {
             url += "&" + params.join("&")
         }
+        if (currentProvider == "gelbooru") url += gelbooruAuth()
         return url
     }
 
@@ -436,6 +444,7 @@ Singleton {
             return
         }
         var url = provider.tagSearchTemplate.replace("{{query}}", encodeURIComponent(query))
+        if (currentProvider == "gelbooru") url += gelbooruAuth()
 
         var xhr = new XMLHttpRequest()
         currentTagRequest = xhr

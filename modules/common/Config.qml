@@ -511,6 +511,10 @@ Singleton {
                     property JsonObject zerochan: JsonObject {
                         property string username: "[unset]"
                     }
+                    property JsonObject gelbooru: JsonObject { // Gelbooru's API needs these (My Account > Options)
+                        property string apiKey: ""
+                        property string userId: ""
+                    }
                 }
                 property JsonObject cornerOpen: JsonObject {
                     property bool enable: true
