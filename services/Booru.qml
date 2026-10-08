@@ -19,7 +19,9 @@ Singleton {
     property string failMessage: Translation.tr("That didn't work. Tips:\n- Check your tags and NSFW settings\n- If you don't have a tag in mind, type a page number")
     property var responses: []
     property int runningRequests: 0
-    property var defaultUserAgent: Config.options?.networking?.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+    // An honest client UA: Cloudflare in front of Danbooru (and others) returns 403 to the fake
+    // "Chrome 123" UA from networking.userAgent, since it claims a browser but doesn't act like one.
+    property var defaultUserAgent: "Quickshell booru sidebar (illogical-impulse)"
     property var providerList: Object.keys(providers).filter(provider => provider !== "system" && providers[provider].api)
     property var providers: {
         "system": { "name": Translation.tr("System") },
@@ -282,7 +284,7 @@ Singleton {
     }
     
     function setProvider(provider) {
-        provider = provider.toLowerCase()
+        provider = (provider ?? "").toLowerCase() // "/mode" with no argument lists the providers
         if (providerList.indexOf(provider) !== -1) {
             Persistent.states.booru.provider = provider
             root.addSystemMessage(Translation.tr("Provider set to ") + providers[provider].name
