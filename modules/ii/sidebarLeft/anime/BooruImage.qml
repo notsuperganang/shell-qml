@@ -17,6 +17,7 @@ Button {
     property var imageData
     property var rowHeight
     property bool manualDownload: false
+    property string referer: "" // sent when downloading; gelbooru's CDN redirects requests without it
     property string previewDownloadPath
     property string downloadPath
     property string nsfwPath
@@ -31,6 +32,7 @@ Button {
         running: root.manualDownload
         filePath: root.filePath
         sourceUrl: root.imageData.preview_url ?? root.imageData.sample_url
+        referer: root.referer
         onDone: (path, width, height) => {
             imageObject.source = ""
             imageObject.source = path
@@ -66,7 +68,9 @@ Button {
             width: root.rowHeight * modelData.aspect_ratio
             height: root.rowHeight
             fillMode: Image.PreserveAspectFit
-            source: modelData.preview_url
+            // manualDownload sets the source once curl has the file; loading the URL directly too
+            // doubles the requests (and gelbooru answers those with redirects, then 429s)
+            source: root.manualDownload ? "" : modelData.preview_url
 
             layer.enabled: true
             layer.effect: OpacityMask {
@@ -174,8 +178,9 @@ Button {
                                 const targetPath = root.imageData.is_nsfw ? root.nsfwPath : root.downloadPath;
                                 const userAgent = Config.options?.networking?.userAgent ?? ""
                                 const userAgentHeader = userAgent ? ` -H 'User-Agent: ${StringUtils.shellSingleQuoteEscape(userAgent)}'` : ""
+                                const refererHeader = root.referer ? ` -e '${StringUtils.shellSingleQuoteEscape(root.referer)}'` : ""
                                 Quickshell.execDetached(["bash", "-c", 
-                                    `mkdir -p '${targetPath}' && curl '${StringUtils.shellSingleQuoteEscape(root.imageData.file_url)}'${userAgentHeader} -o '${targetPath}/${root.fileName}' && notify-send '${Translation.tr("Download complete")}' '${root.downloadPath}/${root.fileName}' -a 'Shell'`
+                                    `mkdir -p '${targetPath}' && curl '${StringUtils.shellSingleQuoteEscape(root.imageData.file_url)}'${userAgentHeader}${refererHeader} -o '${targetPath}/${root.fileName}' && notify-send '${Translation.tr("Download complete")}' '${root.downloadPath}/${root.fileName}' -a 'Shell'`
                                 ])
                             }
                         }

@@ -11,6 +11,7 @@ Process {
     required property string filePath;
     required property string sourceUrl;
     property string downloadUserAgent: Config.options?.networking.userAgent ?? ""
+    property string referer: "" // some image hosts (gelbooru) block hotlinking without it
     
     function processFilePath() {
         return StringUtils.shellSingleQuoteEscape(FileUtils.trimFileProtocol(filePath));
@@ -27,9 +28,13 @@ Process {
         return ` -H 'User-Agent: ${StringUtils.shellSingleQuoteEscape(downloadUserAgent)}'`;
     }
 
+    function curlRefererArg() {
+        return referer ? ` -e '${StringUtils.shellSingleQuoteEscape(referer)}'` : "";
+    }
+
     running: true
     command: ["bash", "-c", 
-        `mkdir -p $(dirname '${processFilePath()}'); [ -f '${processFilePath()}' ] || curl -sSL '${processSourceUrl()}'${curlUserAgentArg()} -o '${processFilePath()}' && file '${processFilePath()}'`
+        `mkdir -p $(dirname '${processFilePath()}'); [ -f '${processFilePath()}' ] || curl -sSL '${processSourceUrl()}'${curlUserAgentArg()}${curlRefererArg()} -o '${processFilePath()}' && file '${processFilePath()}'`
     ]
     stdout: StdioCollector {
         id: imageSizeOutputCollector
