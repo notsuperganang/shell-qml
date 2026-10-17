@@ -174,7 +174,31 @@ Singleton {
         if (root.query.startsWith(Config.options.search.prefix.clipboard)) {
             // Clipboard
             const searchString = StringUtils.cleanPrefix(root.query, Config.options.search.prefix.clipboard);
-            return Cliphist.fuzzyQuery(searchString).map((entry, index, array) => {
+            // Pinned snippets: never on top of the plain history, only above the matches while searching
+            // ("@pin" lists them all)
+            const listAllPins = searchString.trim() === "@pin";
+            const pins = listAllPins ? ClipboardPins.pins
+                : searchString.trim() === "" ? [] : ClipboardPins.fuzzyQuery(searchString);
+            const pinResults = pins.map(pin => resultComp.createObject(null, {
+                rawValue: pin.text,
+                name: pin.label === pin.text ? pin.text : `${pin.label} — ${pin.text}`,
+                verb: "",
+                type: Translation.tr("Pinned"),
+                execute: () => ClipboardPins.copy(pin.text),
+                actions: [resultComp.createObject(null, {
+                        name: Translation.tr("Copy"),
+                        iconName: "content_copy",
+                        iconType: LauncherSearchResult.IconType.Material,
+                        execute: () => ClipboardPins.copy(pin.text)
+                    }), resultComp.createObject(null, {
+                        name: Translation.tr("Unpin"),
+                        iconName: "keep_off",
+                        iconType: LauncherSearchResult.IconType.Material,
+                        execute: () => ClipboardPins.remove(pin.text)
+                    })]
+            }));
+            if (listAllPins) return pinResults;
+            return pinResults.concat(Cliphist.fuzzyQuery(searchString).map((entry, index, array) => {
                 const mightBlurImage = Cliphist.entryIsImage(entry) && root.clipboardWorkSafetyActive;
                 let shouldBlurImage = mightBlurImage;
                 if (mightBlurImage) {
@@ -196,7 +220,14 @@ Singleton {
                             execute: () => {
                                 Cliphist.copy(entry);
                             }
-                        }), resultComp.createObject(null, {
+                        }), ...(Cliphist.entryIsImage(entry) ? [] : [resultComp.createObject(null, {
+                            name: Translation.tr("Pin"),
+                            iconName: "keep",
+                            iconType: LauncherSearchResult.IconType.Material,
+                            execute: () => {
+                                ClipboardPins.pinCliphistEntry(entry);
+                            }
+                        })]), resultComp.createObject(null, {
                             name: Translation.tr("Delete"),
                             iconName: "delete",
                             iconType: LauncherSearchResult.IconType.Material,
@@ -206,7 +237,7 @@ Singleton {
                         })],
                     blurImage: shouldBlurImage
                 });
-            }).filter(Boolean);
+            }).filter(Boolean));
         } else if (root.query.startsWith(Config.options.search.prefix.emojis)) {
             // Clipboard
             const searchString = StringUtils.cleanPrefix(root.query, Config.options.search.prefix.emojis);
