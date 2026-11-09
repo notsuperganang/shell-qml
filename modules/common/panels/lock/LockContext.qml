@@ -22,6 +22,21 @@ Scope {
     property bool fingerprintsConfigured: false
     property var targetAction: LockContext.ActionEnum.Unlock
     property bool alsoInhibitIdle: false
+    property bool capsLock: false
+
+    function refreshCapsLock() {
+        capsLockProc.running = true;
+    }
+
+    // Kernel keyboard LEDs; on if any keyboard (built-in or external) has Caps Lock lit
+    Process {
+        id: capsLockProc
+        running: true
+        command: ["sh", "-c", "cat /sys/class/leds/*::capslock/brightness"]
+        stdout: StdioCollector {
+            onStreamFinished: root.capsLock = text.split("\n").some(l => l.trim() !== "" && l.trim() !== "0")
+        }
+    }
 
     function resetTargetAction() {
         root.targetAction = LockContext.ActionEnum.Unlock;

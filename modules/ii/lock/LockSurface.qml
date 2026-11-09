@@ -55,6 +55,7 @@ MouseArea {
     // Init
     Component.onCompleted: {
         forceFieldFocus();
+        root.context.refreshCapsLock();
         toolbarScale = 1;
         toolbarOpacity = 1;
     }
@@ -63,6 +64,7 @@ MouseArea {
     property bool ctrlHeld: false
     Keys.onPressed: event => {
         root.context.resetClearTimer();
+        root.context.refreshCapsLock();
         if (event.key === Qt.Key_Control) {
             root.ctrlHeld = true;
         }
@@ -72,6 +74,7 @@ MouseArea {
         forceFieldFocus();
     }
     Keys.onReleased: event => {
+        root.context.refreshCapsLock();
         if (event.key === Qt.Key_Control) {
             root.ctrlHeld = false;
         }
@@ -158,6 +161,7 @@ MouseArea {
 
             Keys.onPressed: event => {
                 root.context.resetClearTimer();
+                root.context.refreshCapsLock();
             }
             
             layer.enabled: true
@@ -275,6 +279,14 @@ MouseArea {
                     }
                 }
             }
+        }
+
+        IconAndTextPair {
+            visible: root.context.capsLock
+            Layout.leftMargin: 0
+            icon: "keyboard_capslock"
+            text: "Caps Lock"
+            color: Appearance.colors.colError
         }
 
         // Keyboard layout (Fcitx)
