@@ -40,7 +40,8 @@ Process {
         id: imageSizeOutputCollector
         onStreamFinished: {
             const output = imageSizeOutputCollector.text.trim();
-            const match = output.match(/(\d+)\s*x\s*(\d+)/);
+            // Last WxH is the pixel size; JPEGs list "density 1x1" (or 72x72) before it
+            const match = (output.match(/\d+\s*x\s*\d+/g) ?? []).pop()?.match(/(\d+)\s*x\s*(\d+)/);
 
             if (match) {
                 const width = Number(match[1]);

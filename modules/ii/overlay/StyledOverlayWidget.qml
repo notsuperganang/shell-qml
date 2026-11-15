@@ -25,6 +25,8 @@ AbstractOverlayWidget {
     property bool fancyBorders: true
     property bool showCenterButton: false
     property bool showClickabilityButton: true
+    property bool showPickImageButton: false
+    signal pickImageClicked()
 
     // Defaults n stuff
     required property var modelData
@@ -250,6 +252,15 @@ AbstractOverlayWidget {
                         Layout.fillWidth: true
                         text: root.title
                         elide: Text.ElideRight
+                    }
+
+                    TitlebarButton {
+                        visible: root.showPickImageButton
+                        materialSymbol: "add_photo_alternate"
+                        onClicked: root.pickImageClicked()
+                        StyledToolTip {
+                            text: "Choose image"
+                        }
                     }
 
                     TitlebarButton {

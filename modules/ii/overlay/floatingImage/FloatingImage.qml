@@ -10,8 +10,11 @@ import qs.modules.ii.overlay
 StyledOverlayWidget {
     id: root
     showClickabilityButton: false
+    showPickImageButton: true
     resizable: false
     clickthrough: true
+
+    onPickImageClicked: OverlayContext.pickFloatingImage()
 
     property string imageSource: Config.options.overlay.floatingImage.imageSource
     property real scaleFactor: Config.options.overlay.floatingImage.scale
