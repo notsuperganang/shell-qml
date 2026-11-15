@@ -39,7 +39,7 @@ QuickToggleModel {
 
     Process {
         id: registrationProc
-        command: ["warp-cli", "registration", "new"]
+        command: ["warp-cli", "--accept-tos", "registration", "new"]
         onExited: (exitCode, exitStatus) => {
             console.log("Warp registration exited with code and status:", exitCode, exitStatus)
             if (exitCode === 0) {
